@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { PlusCircle, Users } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { db } from './db';
 import AttendanceGrid from './components/AttendanceGrid';
 import ProgressReport from './components/ProgressReport';

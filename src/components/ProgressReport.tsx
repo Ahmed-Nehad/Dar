@@ -4,6 +4,7 @@ import { db, type Student } from '../db';
 import { SURAH_NAMES } from '../utils/surhas';
 import { getMonthSessions } from '../utils/dates';
 import SearchBar from './SearchBar';
+import { exportToExcel } from '../utils/excelExport';
 
 const normalize = (str: string) => str.trim().replace(/\s+/g, ' ').replaceAll('أ', 'ا');
 
@@ -169,6 +170,75 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
 
   const reportsMap = new Map(reports?.map(r => [r.student_id, r]));
 
+  const handleExport = async () => {
+    if (!students.length) return;
+
+    // 1. Define Schema
+    const schema = [
+      {
+        column: '#',
+        type: Number,
+        value: (s: any) => s.index,
+        width: 5
+      },
+      {
+        column: 'الاسم',
+        type: String,
+        value: (s: any) => s.name,
+        width: 25,
+        fontWeight: 'bold',
+        align: 'right'
+      },
+      {
+        column: "المصاريف",
+        type: String,
+        value: (s: any) => reportsMap.get(s.id)?.expenses ? '✓' : 'X',
+        width: 10,
+        align: 'center',
+      },
+      {
+        column: 'الحفظ الجديد',
+        type: String,
+        value: (s: any) => reportsMap.get(s.id)?.current_hifz || '',
+        width: 20,
+        // wrap: true // Auto-wrap text
+      },
+      {
+        column: 'المراجعة',
+        type: String,
+        value: (s: any) => reportsMap.get(s.id)?.past_revision || '',
+        width: 20,
+        // wrap: true
+      },
+      {
+        column: 'حضور قرآن',
+        type: Number,
+        value: (s: any) => statsMap.get(s.id)?.quran || 0,
+        width: 12,
+        align: 'center'
+      },
+      {
+        column: 'حضور منهج',
+        type: Number,
+        value: (s: any) => statsMap.get(s.id)?.edu || 0,
+        width: 12,
+        align: 'center'
+      },
+      {
+        column: 'ملاحظات',
+        type: String,
+        value: (s: any) => reportsMap.get(s.id)?.notes || '',
+        width: 30
+      }
+    ];
+
+    // 2. Prepare Data
+    const data = students.map((s, i) => ({ ...s, index: i + 1 }));
+
+    // 3. Export
+    await exportToExcel(data, schema, `متابعة_${monthKey}`);
+  };
+
   const filteredStudents = students?.filter(s => normalize(s.name).includes(normalize(search)));
 
 
@@ -177,7 +247,7 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
   return (
     <div className="flex flex-col gap-4">
 
-      <SearchBar search={search} setSearch={setSearch} filteredStudents={filteredStudents} />
+      <SearchBar search={search} setSearch={setSearch} filteredStudents={filteredStudents} exportExcel={handleExport} />
 
       <datalist id="surah-list">
         {SURAH_NAMES.map(surah => (
@@ -186,10 +256,10 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
       </datalist>
 
       {/* Main Table Card */}
-      <div className="card bg-base-100 shadow-sm border border-base-200 rounded-none md:rounded-box">
-        <div className="overflow-x-auto w-full max-h-[70vh]">
+      <div className="card print:!static bg-base-100 shadow-sm border border-base-200 rounded-none md:rounded-box">
+        <div className="overflow-x-auto w-full max-h-[70vh] print-only print:max-w-screen print:max-h-max">
           <table className="table table-pin-rows table-pin-cols table-xs md:table-sm">
-            <thead>
+            <thead className='*:print:min-w-0'>
               <tr className="bg-base-200">
                 <th className="bg-base-200 text-primary z-20 font-bold text-base">اسم الطالب</th>
                 <th className='ext-center min-w-[70px] p-1 font-normal relative' >الماصاريف</th>

@@ -33,3 +33,58 @@ body {
     font-size: 16px !important;
   }
 }
+
+@media print {
+
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Un-hide ONLY the section we marked as 'print-only' */
+  .print-only, .print-only * {
+    visibility: visible;
+  }
+
+  /* 3. Move the 'print-only' section to the top-left of the paper */
+  .print-only {
+    position: absolute;
+    z-index: 1000;
+    right: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;/* Ensure clean background */
+  }
+
+  /* 4. Force Table to expand (Fix scroll cutting off) */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+  
+  /* 5. Ensure headers and colors print correctly */
+  th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: #f3f4f6 !important; /* Light gray header */
+    color: black !important;
+  }
+
+  /* Ensure table borders print clearly */
+  table, th, td {
+    border: 1px solid black !important;
+    font-size: 10pt !important; /* Smaller font to fit paper */
+    page-break-inside: avoid;   /* Don't cut rows in half */
+  }
+
+  /* Force headers to stay readable */
+  th {
+    /* background-color: #f0f0f0 !important; */
+    -webkit-print-color-adjust: exact; /* Force background colors to print */
+  }
+}

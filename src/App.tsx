@@ -173,7 +173,7 @@ export default function App() {
               name="main_tabs"
               role="tab"
               className="tab min-w-24- shrink font-bold text-lg"
-              aria-label="الطلبة"
+              aria-label="الطلاب"
               checked={location.pathname === '/students'}
               onChange={() => navigate('/students')}
             />

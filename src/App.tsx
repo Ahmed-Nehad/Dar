@@ -60,7 +60,7 @@ export default function App() {
       <div className="navbar bg-base-100 shadow-sm sticky- top-0 z-50 px-4">
         <div className="flex-1 flex-row flex gap-2">
           <LoginButton />
-          <h1 className="font-bold !text-xl">نظام التحفيظ</h1>
+          <h1 className="font-bold !text-xl hidden md:block">نظام التحفيظ</h1>
         </div>
 
         <div className="flex-none join direction-ltr">

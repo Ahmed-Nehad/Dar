@@ -28,6 +28,8 @@ body {
   /* scrollbar-gutter:stable; */
 }
 
-html {
-  /* scrollbar-gutter: stable; */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }

@@ -6,6 +6,7 @@ import { db } from './db';
 import AttendanceGrid from './components/AttendanceGrid';
 import ProgressReport from './components/ProgressReport';
 import Students from './components/Students';
+import LoginButton from './components/LoginButton';
 
 // Arabic Month Names
 const months = [
@@ -37,6 +38,11 @@ export default function App() {
     [currentMonthKey]
   );
 
+  const students = useLiveQuery(
+    () => db.students.toArray(),
+    []
+  ) || [];
+
   // 4. Handle "Start Month" Action
   const handleStartMonth = async () => {
     await db.months.add({
@@ -48,11 +54,12 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-base-200 w-[100vw]" dir="rtl">
+    <div className="flex flex-col min-h-screen bg-base-200 w-screen max-w-screen overflow-x-hidden" dir="rtl">
 
       {/* === TOP NAVIGATION BAR === */}
       <div className="navbar bg-base-100 shadow-sm sticky- top-0 z-50 px-4">
-        <div className="flex-1 flex-row">
+        <div className="flex-1 flex-row flex gap-2">
+          <LoginButton />
           <h1 className="font-bold !text-xl">نظام التحفيظ</h1>
         </div>
 
@@ -82,7 +89,7 @@ export default function App() {
       </div>
 
       {/* === CONTENT AREA === */}
-      <main className="flex-1 p-4 mx-auto w-full">
+      <main className="flex-1 p-4 mx-auto w-screen max-w-screen">
         {!monthRecord ? (
           <div className="hero min-h-[60vh]">
             <div className="hero-content text-center">
@@ -102,49 +109,49 @@ export default function App() {
             </div>
           </div>
         ) : (
-            <div role="tablist" className="tabs tabs-lift">
+          <div role="tablist" className="tabs tabs-lift">
 
-              {/* TAB 1: Attendance */}
-              <input
-                type="radio"
-                name="main_tabs"
-                role="tab"
-                className="tab min-w-[120px]- shrink font-bold text-lg"
-                aria-label="سجل الحضور"
-                checked={location.pathname === '/'}
-                onChange={() => navigate('/')}
-              />
-              <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
-                <AttendanceGrid monthKey={currentMonthKey} />
-              </div>
+            {/* TAB 1: Attendance */}
+            <input
+              type="radio"
+              name="main_tabs"
+              role="tab"
+              className="tab min-w-[120px]- shrink font-bold text-lg"
+              aria-label="سجل الحضور"
+              checked={location.pathname === '/'}
+              onChange={() => navigate('/')}
+            />
+            <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
+              <AttendanceGrid monthKey={currentMonthKey} students={students} />
+            </div>
 
-              {/* TAB 2: Progress */}
-              <input
-                type="radio"
-                name="main_tabs"
-                role="tab"
-                className="tab min-w-[120px]- shrink font-bold text-lg"
-                aria-label="المراجعة الشهرية"
-                checked={location.pathname === '/progress'}
-                onChange={() => navigate('/progress')}
-              />
-              <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
-                <ProgressReport monthKey={currentMonthKey} />
-              </div>
+            {/* TAB 2: Progress */}
+            <input
+              type="radio"
+              name="main_tabs"
+              role="tab"
+              className="tab min-w-[120px]- shrink font-bold text-lg"
+              aria-label="المراجعة الشهرية"
+              checked={location.pathname === '/progress'}
+              onChange={() => navigate('/progress')}
+            />
+            <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
+              <ProgressReport monthKey={currentMonthKey} students={students} />
+            </div>
 
-              {/* TAB 3: Students */}
-              <input
-                type="radio"
-                name="main_tabs"
-                role="tab"
-                className="tab min-w-24- shrink font-bold text-lg"
-                aria-label="الطلبة"
-                checked={location.pathname === '/students'}
-                onChange={() => navigate('/students')}
-              />
-              <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
-                <Students />
-              </div>
+            {/* TAB 3: Students */}
+            <input
+              type="radio"
+              name="main_tabs"
+              role="tab"
+              className="tab min-w-24- shrink font-bold text-lg"
+              aria-label="الطلبة"
+              checked={location.pathname === '/students'}
+              onChange={() => navigate('/students')}
+            />
+            <div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-4 md:p-6 w-full">
+              <Students students={students} />
+            </div>
           </div>
         )}
       </main>

@@ -13,11 +13,13 @@
     "@tailwindcss/vite": "^4.1.18",
     "daisyui": "^5.5.14",
     "dexie": "^4.2.1",
+    "dexie-cloud-addon": "^4.2.5",
     "dexie-react-hooks": "^4.2.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
+    "read-excel-file": "^6.0.2",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

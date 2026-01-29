@@ -1,37 +1,68 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { Trash2, Edit2, Save, X, UserPlus, AlertCircle } from 'lucide-react';
-import { db } from '../db';
+import { useRef, useState } from 'react';
+import { Trash2, Edit2, Save, X, UserPlus, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { db, type Student } from '../db';
+import type { DexieError } from 'dexie';
+import readXlsxFile from 'read-excel-file';
+import SearchBar from './SearchBar';
 
-export default function Students() {
-    // 1. Fetch only active students
-    const students = useLiveQuery(() =>
-        db.students.filter(s => s.is_active !== false).toArray()
-    );
+export default function Students({ students }: { students: Student[] }) {
 
     // 2. State for Adding New Student
+    const [search, setSearch] = useState('');
     const [newName, setNewName] = useState('');
     const [newNote, setNewNote] = useState('');
 
     // 3. State for Inline Editing
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editNote, setEditNote] = useState('');
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // --- ACTIONS ---
+    const normalize = (str: string) => str.trim().replace(/\s+/g, ' ').replaceAll('أ', 'ا');
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newName.trim()) return;
 
-        await db.students.add({
-            name: newName.trim(),
-            notes: newNote.trim(),
-            is_active: true
-        });
+        const name = newName.trim();
+        const notes = newNote.trim() || '';
+
+        const exists = students.some(s => normalize(s.name) === normalize(name));
+        if (exists) {
+            alert('هذا الاسم مسجل بالفعل!');
+            return;
+        }
+
+        try {
+            await db.students.add({ name, notes });
+        } catch (err: unknown) {
+            if (err && typeof err === 'object' && 'name' in err) {
+                const dexieError = err as DexieError;
+                switch (dexieError.name) {
+                    case "ConstraintError":
+                        alert("هذا الأسم مسجل بالفعل");
+                        break;
+                    default:
+                        alert('حدث خطأ');
+                        break;
+                }
+            } else {
+                console.log(err);
+            }
+        }
 
         setNewName('');
         setNewNote('');
+    };
+    const handleRemove = async (id: string) => {
+        try {
+            await db.students.delete(id);
+        } catch (err: unknown) {
+            console.log(err);
+            alert("حدث خطأ")
+        }
     };
 
     const startEdit = (student: any) => {
@@ -39,14 +70,12 @@ export default function Students() {
         setEditName(student.name);
         setEditNote(student.notes || '');
     };
-
     const cancelEdit = () => {
         setEditingId(null);
         setEditName('');
         setEditNote('');
     };
-
-    const saveEdit = async (id: number) => {
+    const saveEdit = async (id: string) => {
         if (!editName.trim()) return;
 
         await db.students.update(id, {
@@ -56,45 +85,114 @@ export default function Students() {
         setEditingId(null);
     };
 
-    // Soft delete to preserve attendance history
-    const handleRemove = async (id: number) => {
-        if (window.confirm("هل أنت متأكد من حذف هذا الطالب؟ (سيتم أرشفته للحفاظ على سجله السابق)")) {
-            await db.students.update(id, { is_active: false });
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            // 1. Read the file (returns Array of Arrays)
+            // Example: [ ["الاسم", "السن"], ["أحمد", 10], ["محمد", 12] ]
+            const rows = await readXlsxFile(file);
+
+            if (rows.length === 0) {
+                alert('الملف فارغ!');
+                return;
+            }
+
+            // 2. Find the Header Row (First row)
+            const headers = rows[0].map(h => String(h).trim());
+
+            const possibleHeaders = ['name', 'Name', 'الاسم', 'الأسم', 'أسم', 'اسم الطالب', 'الطالب'];
+
+            // Find the INDEX of the column that contains the name
+            const nameColIndex = headers.findIndex(h => possibleHeaders.includes(h));
+
+            if (nameColIndex === -1) {
+                alert(`لم يتم العثور على عمود للاسم.\nالرجاء التأكد من وجود عمود بعنوان: "الاسم" أو "الأسم" أو "أسم"`);
+                return;
+            }
+
+            const existingNames = new Set(students.map(s => normalize(s.name)));
+            const studentsToAdd: any[] = [];
+            let skippedCount = 0;
+
+            // 3. Extract Names (Skip header row 0)
+            rows.slice(1).map((row) => {
+                const rawName = row[nameColIndex]; // Get data from the specific column index
+
+                if (rawName && String(rawName).trim().length > 0) {
+                    const name = String(rawName).trim();
+                    if (existingNames.has(normalize(name))) skippedCount++;
+                    else {
+                        existingNames.add(normalize(name));
+                        studentsToAdd.push({
+                            id: `std${crypto.randomUUID()}`,
+                            name,
+                            notes: '',
+                            is_active: true
+                        })
+                    };
+                }
+                return null;
+            });
+
+            if (studentsToAdd.length > 0) {
+                await db.students.bulkAdd(studentsToAdd);
+                alert(`تمت العملية بنجاح:\n✅ تم إضافة: ${studentsToAdd.length}\n⚠️ تم تجاهل (مكرر): ${skippedCount}`);
+            } else {
+                alert(`لم يتم إضافة أي طلاب جدد.\nجميع الأسماء (${skippedCount}) موجودة بالفعل.`);
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('حدث خطأ أثناء قراءة الملف. تأكد أن الملف بصيغة Excel (.xlsx)');
+        } finally {
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
+
+    const filteredStudents = students?.filter(s => s.name.includes(search));
 
     return (
         <div className="p-4 mx-auto">
 
-            {/* HEADER & ADD FORM */}
+            {/* HEADER CARD */}
             <div className="card bg-base-100 shadow-sm border border-base-200 mb-8">
                 <div className="card-body">
-                    <h2 className="card-title gap-2 mb-4">
-                        <UserPlus className="text-primary" />
-                        إضافة طالب جديد
-                    </h2>
+                    <div className="flex justify-between items-start">
+                        <h2 className="card-title gap-2 mb-4">
+                            <UserPlus className="text-primary" />
+                            إدارة الطلاب
+                        </h2>
+
+                        {/* IMPORT BUTTON */}
+                        <div>
+                            <input
+                                type="file"
+                                accept=".xlsx"
+                                hidden
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                            />
+                            <button
+                                className="btn btn-outline btn-success gap-2 btn-sm"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <FileSpreadsheet size={18} />
+                                استيراد من Excel
+                            </button>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="form-control w-full md:w-1/3">
                             <label className="label"><span className="label-text font-bold">اسم الطالب</span></label>
-                            <input
-                                type="text"
-                                className="input input-bordered w-full"
-                                placeholder="أحمد محمد..."
-                                value={newName}
-                                onChange={e => setNewName(e.target.value)}
-                            />
+                            <input type="text" className="input input-bordered w-full" placeholder="أحمد محمد..." value={newName} onChange={e => setNewName(e.target.value)} />
                         </div>
 
                         <div className="form-control w-full md:w-1/2">
-                            <label className="label"><span className="label-text">ملاحظات عامة (اختياري)</span></label>
-                            <input
-                                type="text"
-                                className="input input-bordered w-full"
-                                placeholder="رقم ولي الأمر، ملاحظات صحية..."
-                                value={newNote}
-                                onChange={e => setNewNote(e.target.value)}
-                            />
+                            <label className="label"><span className="label-text">ملاحظات عامة</span></label>
+                            <input type="text" className="input input-bordered w-full" placeholder="رقم ولي الأمر..." value={newNote} onChange={e => setNewNote(e.target.value)} />
                         </div>
 
                         <button type="submit" className="btn btn-primary w-full md:w-auto" disabled={!newName.trim()}>
@@ -104,13 +202,10 @@ export default function Students() {
                 </div>
             </div>
 
-            {/* Toolbar */}
-            <div className="flex justify-between items-center mb-5">
-                <h2 className="font-bold text-lg opacity-70">عدد الطلاب: {students?.length}</h2>
-            </div>
+            <SearchBar search={search} setSearch={setSearch} filteredStudents={filteredStudents} />
 
             {/* STUDENTS LIST */}
-            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden mt-5">
 
                 <div className="overflow-x-auto">
                     <table className="table table-zebra">
@@ -125,13 +220,13 @@ export default function Students() {
                         </thead>
 
                         <tbody>
-                            {students?.map((student) => (
+                            {filteredStudents?.map((student, index) => (
                                 <tr key={student.id} className="hover">
 
                                     {/* --- RENDER MODE --- */}
                                     {editingId !== student.id ? (
                                         <>
-                                            <td>{student.id}</td>
+                                            <td>{index+1}</td>
                                             <td className="font-bold text-lg">{student.name}</td>
                                             <td className="opacity-70 min-w-fit text-nowrap">{student.notes || '-'}</td>
                                             <td className="flex justify-center gap-2">

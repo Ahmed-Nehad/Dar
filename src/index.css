@@ -24,4 +24,10 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* overflow-x: hidden; */
+  /* scrollbar-gutter:stable; */
+}
+
+html {
+  /* scrollbar-gutter: stable; */
 }

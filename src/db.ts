@@ -49,6 +49,17 @@ db.version(2).stores({
   months: "key, year" // To list available months
 });
 
+// Add error handler for opening failures
+db.open().catch(err => {
+  console.error('Failed to open database:', err);
+  alert(err.name);
+  alert(err.message);
+  // Optionally try to delete and recreate
+  if (err.name === 'UnknownError') {
+    return db.delete().then(() => db.open());
+  }
+});
+
 db.cloud.configure({
   databaseUrl: "https://zs28znv2u.dexie.cloud",
   requireAuth: false

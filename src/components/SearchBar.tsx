@@ -1,7 +1,5 @@
 import { Search } from 'lucide-react'
 
-const normalize = (str: string) => str.trim().replace(/\s+/g, ' ').replaceAll('أ', 'ا');
-
 function SearchBar({ filteredStudents, search, setSearch }: { filteredStudents: any[], search: string, setSearch: (prop: any) => void }) {
     return (
         <div className="flex justify-between items-end gap-2 px-1">
@@ -11,7 +9,7 @@ function SearchBar({ filteredStudents, search, setSearch }: { filteredStudents: 
                     className="grow"
                     placeholder="بحث عن طالب..."
                     value={search}
-                    onChange={(e) => setSearch(normalize(e.target.value))}
+                    onChange={(e) => setSearch((e.target.value))}
                 />
                 <Search className="w-4 h-4 opacity-70" />
             </label>

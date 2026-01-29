@@ -24,6 +24,7 @@ interface MonthlyReport {
   month_key: string; // Format: "YYYY-MM" (e.g., "2026-01") to link to year/month
   current_hifz: string;
   past_revision: string;
+  expenses: boolean;
   notes: string;
 }
 

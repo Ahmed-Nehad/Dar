@@ -7,6 +7,8 @@ import AttendanceGrid from './components/AttendanceGrid';
 import ProgressReport from './components/ProgressReport';
 import Students from './components/Students';
 import LoginButton from './components/LoginButton';
+import SystemStatusBar from './components/SystemStatusBar';
+import toast from 'react-hot-toast';
 
 // Arabic Month Names
 const months = [
@@ -45,6 +47,32 @@ export default function App() {
 
   // 4. Handle "Start Month" Action
   const handleStartMonth = async () => {
+    const count = await db.months.count();
+    if (count == 0) {
+      if (db.cloud.currentUser?.getValue().userId === 'unauthorized') {
+        toast((_t) => (
+          <div className="flex flex-col gap-2 min-w-[300px]">
+            <span className="font-bold text-lg flex items-center gap-2 text-warning">
+              ⚠️ تنبيه هام
+            </span>
+            <span className="text-sm">
+              لقد بدأت في تسجيل البيانات كـ <b>زائر</b>.
+              <br />
+              هذه البيانات محفوظة <b>مؤقتاً</b> على هذا الجهاز فقط.
+              <br />
+              لنتمكن من حفظها لك سحابياً، يرجى تسجيل الدخول.
+            </span>
+          </div>
+        ), {
+          duration: 10000, // Stay for 10 seconds
+          position: 'top-center',
+          style: {
+            border: '2px solid #FBBD23', // Warning Yellow Border
+            padding: '16px',
+          },
+        });
+      }
+    }
     await db.months.add({
       key: currentMonthKey,
       name: months[selectedMonthIdx],
@@ -155,7 +183,7 @@ export default function App() {
           </div>
         )}
       </main>
-
+      <SystemStatusBar />
     </div>
   );
 }

@@ -32,6 +32,9 @@ export default function Students({ students }: { students: Student[] }) {
         const exists = students.some(s => normalize(s.name) === normalize(name));
         if (exists) {
             alert('هذا الاسم مسجل بالفعل!');
+            setSearch(name.trim());
+            setNewName('');
+            setNewNote('');
             return;
         }
 
@@ -43,6 +46,7 @@ export default function Students({ students }: { students: Student[] }) {
                 switch (dexieError.name) {
                     case "ConstraintError":
                         alert("هذا الأسم مسجل بالفعل");
+                        setSearch(name.trim());
                         break;
                     default:
                         alert('حدث خطأ');
@@ -82,10 +86,21 @@ export default function Students({ students }: { students: Student[] }) {
     const saveEdit = async (id: string) => {
         if (!editName.trim()) return;
 
-        await db.students.update(id, {
-            name: editName.trim(),
-            notes: editNote.trim()
-        });
+        try{
+            await db.students.update(id, {
+                name: editName.trim(),
+                notes: editNote.trim()
+            });
+        }catch(err: any) {
+            console.log(err.message);
+            if(err && err.message == "Error modifying one or more objects. Errors: ConstraintError: Unable to add key to index 'name': at least one key does not satisfy the uniqueness requirements."){
+                alert('هذا الأسم مسجل بالفعل')
+                setSearch(editName.trim());
+            } else {
+                alert('حدث خطأ')
+            }
+            cancelEdit();
+        }
         setEditingId(null);
     };
 
@@ -155,7 +170,7 @@ export default function Students({ students }: { students: Student[] }) {
         }
     };
 
-    const filteredStudents = students?.filter(s => s.name.includes(search));
+    const filteredStudents = students?.filter(s => normalize(s.name).includes(normalize(search)));
 
     return (
         <div className="p-4 mx-auto">
@@ -216,22 +231,22 @@ export default function Students({ students }: { students: Student[] }) {
                         {/* Table Header */}
                         <thead>
                             <tr className="bg-base-200 text-base">
-                                <th className='w-10'>#</th>
-                                <th className='min-w-44'>الاسم</th>
+                                {/* <th className=''>#</th> */}
+                                <th className='text-nowrap'>الاسم</th>
                                 <th>ملاحظات</th>
                                 <th className="w-32 text-center">إجراءات</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {filteredStudents?.map((student, index) => (
+                            {filteredStudents?.map((student) => (
                                 <tr key={student.id} className="hover">
 
                                     {/* --- RENDER MODE --- */}
                                     {editingId !== student.id ? (
                                         <>
-                                            <td>{index + 1}</td>
-                                            <td className="font-bold text-lg">{student.name}</td>
+                                            {/* <td className='text-nowrap w-5'>{index + 1}</td> */}
+                                            <td className="font-bold text-lg text-nowrap">{student.name}</td>
                                             <td className="opacity-70 min-w-fit text-nowrap">{student.notes || '-'}</td>
                                             <td className="flex justify-center gap-2">
                                                 <button
@@ -253,7 +268,7 @@ export default function Students({ students }: { students: Student[] }) {
                                     ) : (
                                         /* --- EDIT MODE --- */
                                         <>
-                                            <td>{student.id}</td>
+                                            {/* <td>{index + 1}</td> */}
                                             <td>
                                                 <input
                                                     type="text"

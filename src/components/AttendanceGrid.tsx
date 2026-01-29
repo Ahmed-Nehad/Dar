@@ -33,8 +33,7 @@ export default function AttendanceGrid({ monthKey, students }: { monthKey: strin
       });
     }
   };
-
-  const filteredStudents = students?.filter(s => normalize(s.name).includes(search));
+  const filteredStudents = students?.filter(s => normalize(s.name).includes(normalize(search)));
 
   if (!Array.isArray(students)) return <div className="loading loading-spinner loading-lg text-primary"></div>;
   else if (students.length == 0) return <div className='text-3xl font-bold text-center m-10'>مفيش طلبة</div>
@@ -50,7 +49,7 @@ export default function AttendanceGrid({ monthKey, students }: { monthKey: strin
           <table className="table table-pin-rows table-pin-cols table-xs md:table-sm">
             <thead>
               <tr className="bg-base-200">
-                <th className="bg-base-200 z-20 min-w-[130px] text-base font-bold text-primary">اسم الطالب</th>
+                <th className="bg-base-200 z-20 text-base font-bold text-primary">اسم الطالب</th>
                 {sessions.map(s => (
                   <th key={s.dateStr} className="text-center min-w-[70px] p-1 font-normal relative">
                     <div className="flex flex-col items-center gap-1">
@@ -64,10 +63,10 @@ export default function AttendanceGrid({ monthKey, students }: { monthKey: strin
               </tr>
             </thead>
             <tbody>
-              {filteredStudents?.map((student, index) => (
+              {filteredStudents?.map((student) => (
                 <tr key={student.id} className="hover">
                   <th className="bg-base-100 font-medium z-10 text-nowrap">
-                    <span className='inline-block w-5'>{index+1}</span>
+                    {/* <span className='inline-block w-5'>{index+1}</span> */}
                     <span className='text-nowrap'>{student.name}</span>
                   </th>
                   {sessions.map(s => {

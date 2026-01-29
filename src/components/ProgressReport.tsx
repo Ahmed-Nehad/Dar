@@ -13,26 +13,26 @@ const StudentRow = ({
   report,
   stats,
   monthKey,
-  index
 }: {
   student: any,
   report: any,
   stats: { quran: number, edu: number },
   monthKey: string,
-  index: number
 }) => {
 
   const [formData, setFormData] = useState({
     current_hifz: '',
     past_revision: '',
-    notes: ''
+    notes: '',
+    expenses: false,
   });
 
   useEffect(() => {
     setFormData({
       current_hifz: report?.current_hifz || '',
       past_revision: report?.past_revision || '',
-      notes: report?.notes || ''
+      notes: report?.notes || '',
+      expenses: report?.expenses || false,
     });
   }, [report, monthKey]);
 
@@ -56,6 +56,7 @@ const StudentRow = ({
           current_hifz: '',
           past_revision: '',
           notes: '',
+          expenses: false,
           [field]: value
         });
       }
@@ -69,9 +70,20 @@ const StudentRow = ({
   return (
     <tr className="hover group">
       <th className="bg-base-100 font-medium z-10 text-nowrap">
-        <span className='inline-block w-5'>{index+1}</span>
+        {/* <span className='inline-block w-5'>{index+1}</span> */}
         <span className='text-nowrap'>{student.name}</span>
       </th>
+
+      <td className="p-0 text-center border-l border-base-100">
+        <label className="cursor-pointer flex justify-center items-center h-12 w-full hover:bg-base-200/50 transition-colors">
+          <input
+            type="checkbox"
+            className={`checkbox checkbox-sm checkbox-neutral`}
+            checked={formData.expenses}
+            onChange={() => handleSave('expenses', !formData.expenses)}
+          />
+        </label>
+      </td>
 
       {/* Column 1: Quran Stats */}
       <td className="p-1 text-center border-l border-base-100 min-w-[60px]">
@@ -157,14 +169,14 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
 
   const reportsMap = new Map(reports?.map(r => [r.student_id, r]));
 
-  const filteredStudents = students?.filter(s => normalize(s.name).includes(search));
+  const filteredStudents = students?.filter(s => normalize(s.name).includes(normalize(search)));
 
 
   if (!students) return <div className="loading loading-spinner loading-lg text-primary mx-auto block mt-10"></div>;
 
   return (
     <div className="flex flex-col gap-4">
-      
+
       <SearchBar search={search} setSearch={setSearch} filteredStudents={filteredStudents} />
 
       <datalist id="surah-list">
@@ -179,7 +191,8 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
           <table className="table table-pin-rows table-pin-cols table-xs md:table-sm">
             <thead>
               <tr className="bg-base-200">
-                <th className="bg-base-200 text-primary z-20 font-bold text-base min-w-[130px]">اسم الطالب</th>
+                <th className="bg-base-200 text-primary z-20 font-bold text-base">اسم الطالب</th>
+                <th className='ext-center min-w-[70px] p-1 font-normal relative' >الماصاريف</th>
 
                 <th className="relative font-normal text-center min-w-[60px] w-[60px] text-sm">{"قرآن" + ` /${sessions.filter(s => s.type == 'quran').length}`}</th>
                 <th className="relative font-normal text-center min-w-[60px] w-[60px] text-sm">{"تربوي" + ` /${sessions.filter(s => s.type == 'edu').length}`}</th>
@@ -190,10 +203,9 @@ export default function ProgressReport({ monthKey, students }: { monthKey: strin
               </tr>
             </thead>
             <tbody>
-              {filteredStudents?.map((student, index) => (
+              {filteredStudents?.map((student) => (
                 <StudentRow
                   key={student.id}
-                  index={index}
                   student={student}
                   report={reportsMap.get(student.id)}
                   stats={statsMap.get(student.id) || { quran: 0, edu: 0 }}

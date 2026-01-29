@@ -57,6 +57,10 @@ export default function Students({ students }: { students: Student[] }) {
         setNewNote('');
     };
     const handleRemove = async (id: string) => {
+        const isConfirmed = window.confirm('هل انت متأكد من حذف الطالب؟');
+
+        if (!isConfirmed) return;
+
         try {
             await db.students.delete(id);
         } catch (err: unknown) {
@@ -226,7 +230,7 @@ export default function Students({ students }: { students: Student[] }) {
                                     {/* --- RENDER MODE --- */}
                                     {editingId !== student.id ? (
                                         <>
-                                            <td>{index+1}</td>
+                                            <td>{index + 1}</td>
                                             <td className="font-bold text-lg">{student.name}</td>
                                             <td className="opacity-70 min-w-fit text-nowrap">{student.notes || '-'}</td>
                                             <td className="flex justify-center gap-2">

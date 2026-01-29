@@ -6,7 +6,7 @@ import { BrowserRouter as Router } from 'react-router-dom'
 
 // --- MOBILE DEBUGGER START ---
 // This catches crash errors and prints them on the phone screen
-window.onerror = function (message, source, lineno, colno, error) {
+window.onerror = function (message, lineno) {
   const errorBox = document.createElement('div');
   errorBox.style.position = 'fixed';
   errorBox.style.top = '0';

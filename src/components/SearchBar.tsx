@@ -1,4 +1,4 @@
-import { FileDown, FileSpreadsheet, Printer, Search } from 'lucide-react'
+import { FileDown, Printer, Search } from 'lucide-react'
 
 function SearchBar({ filteredStudents, search, setSearch, exportExcel }: { filteredStudents: any[], search: string, setSearch: (prop: any) => void, exportExcel?: () => void }) {
     return (

@@ -247,7 +247,7 @@ export default function Students({ students }: { students: Student[] }) {
                                         <>
                                             {/* <td className='text-nowrap w-5'>{index + 1}</td> */}
                                             <td className="font-bold text-lg text-nowrap">{student.name}</td>
-                                            <td className="opacity-70 min-w-fit text-nowrap">{student.notes || '-'}</td>
+                                            <td className="opacity-70 min-w-fit text-nowrap ph-mask">{student.notes || '-'}</td>
                                             <td className="flex justify-center gap-2">
                                                 <button
                                                     className="btn btn-square btn-sm btn-ghost text-info"

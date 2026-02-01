@@ -129,7 +129,7 @@ const StudentRow = ({
       {/* Notes */}
       <td className="p-1 border-l border-base-100">
         <textarea
-          className="textarea textarea-bordered textarea-xs w-full h-10 min-h-[2.5rem] leading-tight resize-none focus:h-20 focus:z-50 focus:shadow-lg transition-all"
+          className="textarea textarea-bordered textarea-xs w-full h-10 min-h-[2.5rem] leading-tight resize-none focus:h-20 focus:z-50 focus:shadow-lg transition-all ph-mask"
           placeholder="..."
           value={formData.notes}
           onChange={(e) => handleChange('notes', e.target.value)}

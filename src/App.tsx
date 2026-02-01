@@ -9,6 +9,7 @@ import Students from './components/Students';
 import LoginButton from './components/LoginButton';
 import SystemStatusBar from './components/SystemStatusBar';
 import toast from 'react-hot-toast';
+import { usePostHog } from '@posthog/react';
 
 // Arabic Month Names
 const months = [
@@ -23,6 +24,7 @@ export default function App() {
   const currentDate = new Date();
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [selectedMonthIdx, setSelectedMonthIdx] = useState(currentDate.getMonth());
+  const postHog = usePostHog();
 
   // Generate dynamic year range (Current Year - 1 to Current Year + 4)
   const existingYears = useLiveQuery(() => db.months.orderBy('year').uniqueKeys());
@@ -47,6 +49,7 @@ export default function App() {
 
   // 4. Handle "Start Month" Action
   const handleStartMonth = async () => {
+    postHog?.startSessionRecording();
     const count = await db.months.count();
     if (count == 0) {
       if (db.cloud.currentUser?.getValue().userId === 'unauthorized') {
@@ -73,12 +76,28 @@ export default function App() {
         });
       }
     }
-    await db.months.add({
-      key: currentMonthKey,
-      name: months[selectedMonthIdx],
-      year: selectedYear,
-      is_open: true
-    });
+    try {
+      await db.months.add({
+        key: currentMonthKey,
+        name: months[selectedMonthIdx],
+        year: selectedYear,
+        is_open: true
+      });
+
+      toast.success('تم بدأ شهر جديد');
+      postHog?.capture('month started');
+    } catch (error) {
+      toast.error('حدث خطأ غير متوقع!!');
+      console.error(error);
+
+      postHog?.captureException(error, {
+        desctiption: 'Error creating new month',
+        location: location.pathname,
+      })
+
+    } finally {
+      postHog?.stopSessionRecording();
+    }
   };
 
   return (

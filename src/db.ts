@@ -1,6 +1,7 @@
 // src/db.ts
 import { Dexie, type EntityTable } from "dexie";
 import dexieCloud from 'dexie-cloud-addon';
+import posthog from "posthog-js";
 
 // 1. Student Profile: Constant info
 interface Student {
@@ -52,6 +53,12 @@ db.version(2).stores({
 
 // Add error handler for opening failures
 db.open().catch(err => {
+  posthog?.captureException(err, { 
+    describtion: 'Error open the database',
+    type: 'Database Error',
+    location: 'db.ts',
+  });
+
   console.error('Failed to open database:', err);
   alert(err.name);
   alert(err.message);

@@ -3,8 +3,12 @@ import { useObservable } from "dexie-react-hooks";
 import { db } from "../db";
 import { LogIn, LogOut, Loader2, FileWarning, Check } from "lucide-react";
 import toast from 'react-hot-toast'; 
+import { usePostHog } from '@posthog/react';
 
 export default function LoginButton() {
+
+  const postHog = usePostHog();
+
   const user = useObservable(db.cloud.currentUser);
   const [isBusy, setIsBusy] = useState(false);
 
@@ -14,12 +18,25 @@ export default function LoginButton() {
   // --- LOGIN LOGIC ---
   const handleLogin = async () => {
     setIsBusy(true); 
+
+    postHog?.startSessionRecording();
+    postHog?.capture('login_attempt', { method: 'popup' });
+
     const toastId = toast.loading("جاري فتح نافذة الدخول... الرجاء المتابعة في النافذة المنبثقة");
 
     try {
       await db.cloud.login();
+
+      postHog?.identify(user?.userId, { email: user?.email });
+      postHog?.capture('login_success');
+
       toast.success("تم الدخول بنجاح! جاري تحميل البيانات...", { id: toastId });
     } catch (error: any) {
+      postHog?.capture('login_failure', {
+        reason: error.message,
+        error_name: error.name
+      });
+
       console.error("Login Error:", error);
       if (error.name === 'AbortError' || error.message?.includes('Cancelled')) {
         toast.error("تم إلغاء العملية", { id: toastId });
@@ -28,6 +45,7 @@ export default function LoginButton() {
       }
     } finally {
       setIsBusy(false);
+      postHog?.stopSessionRecording();
     }
   };
 
@@ -55,7 +73,7 @@ export default function LoginButton() {
     return (
       <div className="flex items-center gap-2">
         <div className="badge badge-success gap-2 p-3 shadow-sm transition-all duration-300">
-          <span className="text-xs font-mono">{user?.email}</span>
+          <span className="text-xs font-mono ph-mask">{user?.email}</span>
           <span className="md:hidden text-xs">متصل</span>
           <Check size={14} />
         </div>

@@ -81,6 +81,7 @@ export default function App() {
 
     try {
       await db.months.add({
+        id: `std${crypto.randomUUID()}`,
         key: currentMonthKey,
         name: months[selectedMonthIdx],
         year: selectedYear,

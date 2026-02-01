@@ -32,6 +32,7 @@ interface MonthlyReport {
 
 // 4. Months Registry: To track which months have been "Started"
 interface AcademicMonth {
+  id: string;
   key: string; // "YYYY-MM" (Primary Key)
   name: string; // "January"
   year: number;
@@ -42,7 +43,7 @@ const db = new Dexie("DarTahfezDB", { addons: [dexieCloud] }) as Dexie & {
   students: EntityTable<Student, "id">;
   attendance: EntityTable<Attendance, "id">;
   monthly_reports: EntityTable<MonthlyReport, "id">;
-  months: EntityTable<AcademicMonth, "key">;
+  months: EntityTable<AcademicMonth, "id">;
 };
 
 db.use(logger({
@@ -53,7 +54,7 @@ db.version(2).stores({
   students: "@id, &name",
   attendance: "@id, [student_id+date], date", // Compound index to prevent duplicate entries per day
   monthly_reports: "@id, [student_id+month_key], month_key", // One report per student per month
-  months: "key, year" // To list available months
+  months: "@id, key, year" // To list available months
 });
 
 // Add error handler for opening failures

@@ -10,6 +10,7 @@ import LoginButton from './components/LoginButton';
 import SystemStatusBar from './components/SystemStatusBar';
 import toast from 'react-hot-toast';
 import { usePostHog } from '@posthog/react';
+import MigrationAlert from './components/MigrationAlert';
 
 // Arabic Month Names
 const months = [
@@ -27,7 +28,7 @@ export default function App() {
   const postHog = usePostHog();
 
   // Generate dynamic year range (Current Year - 1 to Current Year + 4)
-  const existingYears = useLiveQuery(() => db.months.orderBy('year').uniqueKeys());
+  const existingYears = useLiveQuery(() => db.academic_months.orderBy('year').uniqueKeys());
   const years = Array.from(new Set([
     currentDate.getFullYear(),
     ...(existingYears || []).map(y => Number(y))
@@ -38,7 +39,7 @@ export default function App() {
 
   // 3. Check DB for Month Existence
   const monthRecord = useLiveQuery(
-    () => db.months.get(currentMonthKey),
+    () => db.academic_months.where('key').equals(currentMonthKey).first(),
     [currentMonthKey]
   );
 
@@ -51,7 +52,7 @@ export default function App() {
   const handleStartMonth = async () => {
     postHog?.startSessionRecording();
     try {
-      const count = await db.months.count();
+      const count = await db.academic_months.count();
       if (count == 0) {
         if (db.cloud.currentUser?.getValue().userId === 'unauthorized') {
           toast((_t) => (
@@ -80,8 +81,8 @@ export default function App() {
     } catch (error) {}
 
     try {
-      await db.months.add({
-        id: `std${crypto.randomUUID()}`,
+      await db.academic_months.add({
+        id: `acd${crypto.randomUUID()}`,
         key: currentMonthKey,
         name: months[selectedMonthIdx],
         year: selectedYear,
@@ -114,6 +115,7 @@ export default function App() {
         <div className="flex-1 flex-row flex gap-2">
           <LoginButton />
           <h1 className="font-bold !text-xl hidden md:block">نظام التحفيظ</h1>
+          <MigrationAlert />
         </div>
 
         <div className="flex-none join direction-ltr">

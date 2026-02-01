@@ -156,6 +156,7 @@ export default function Students({ students }: { students: Student[] }) {
             });
 
             if (studentsToAdd.length > 0) {
+                console.log('Will start bulk add for users')
                 await db.students.bulkAdd(studentsToAdd);
                 alert(`تمت العملية بنجاح:\n✅ تم إضافة: ${studentsToAdd.length}\n⚠️ تم تجاهل (مكرر): ${skippedCount}`);
             } else {

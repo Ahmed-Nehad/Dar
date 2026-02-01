@@ -2,6 +2,7 @@
 import { Dexie, type EntityTable } from "dexie";
 import dexieCloud from 'dexie-cloud-addon';
 import posthog from "posthog-js";
+import logger from "dexie-logger";
 
 // 1. Student Profile: Constant info
 interface Student {
@@ -44,6 +45,10 @@ const db = new Dexie("DarTahfezDB", { addons: [dexieCloud] }) as Dexie & {
   months: EntityTable<AcademicMonth, "key">;
 };
 
+db.use(logger({
+  tableWhiteList: ['months', 'students'],
+}));
+
 db.version(2).stores({
   students: "@id, &name",
   attendance: "@id, [student_id+date], date", // Compound index to prevent duplicate entries per day
@@ -53,10 +58,12 @@ db.version(2).stores({
 
 // Add error handler for opening failures
 db.open().catch(err => {
-  posthog?.captureException(err, { 
+  posthog?.capture('$exception', { 
     describtion: 'Error open the database',
     type: 'Database Error',
     location: 'db.ts',
+    err: err.name,
+    message: err.message || String(err),
   });
 
   console.error('Failed to open database:', err);

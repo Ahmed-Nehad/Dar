@@ -33,7 +33,7 @@ export default function LoginButton() {
       toast.success("تم الدخول بنجاح! جاري تحميل البيانات...", { id: toastId });
     } catch (error: any) {
       postHog?.capture('login_failure', {
-        reason: error.message,
+        reason: error.message || String(error),
         error_name: error.name
       });
 

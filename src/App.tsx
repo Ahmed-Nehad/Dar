@@ -50,32 +50,35 @@ export default function App() {
   // 4. Handle "Start Month" Action
   const handleStartMonth = async () => {
     postHog?.startSessionRecording();
-    const count = await db.months.count();
-    if (count == 0) {
-      if (db.cloud.currentUser?.getValue().userId === 'unauthorized') {
-        toast((_t) => (
-          <div className="flex flex-col gap-2 min-w-[300px]">
-            <span className="font-bold text-lg flex items-center gap-2 text-warning">
-              ⚠️ تنبيه هام
-            </span>
-            <span className="text-sm">
-              لقد بدأت في تسجيل البيانات كـ <b>زائر</b>.
-              <br />
-              هذه البيانات محفوظة <b>مؤقتاً</b> على هذا الجهاز فقط.
-              <br />
-              لنتمكن من حفظها لك سحابياً، يرجى تسجيل الدخول.
-            </span>
-          </div>
-        ), {
-          duration: 10000, // Stay for 10 seconds
-          position: 'top-center',
-          style: {
-            border: '2px solid #FBBD23', // Warning Yellow Border
-            padding: '16px',
-          },
-        });
+    try {
+      const count = await db.months.count();
+      if (count == 0) {
+        if (db.cloud.currentUser?.getValue().userId === 'unauthorized') {
+          toast((_t) => (
+            <div className="flex flex-col gap-2 min-w-[300px]">
+              <span className="font-bold text-lg flex items-center gap-2 text-warning">
+                ⚠️ تنبيه هام
+              </span>
+              <span className="text-sm">
+                لقد بدأت في تسجيل البيانات كـ <b>زائر</b>.
+                <br />
+                هذه البيانات محفوظة <b>مؤقتاً</b> على هذا الجهاز فقط.
+                <br />
+                لنتمكن من حفظها لك سحابياً، يرجى تسجيل الدخول.
+              </span>
+            </div>
+          ), {
+            duration: 10000, // Stay for 10 seconds
+            position: 'top-center',
+            style: {
+              border: '2px solid #FBBD23', // Warning Yellow Border
+              padding: '16px',
+            },
+          });
+        }
       }
-    }
+    } catch (error) {}
+
     try {
       await db.months.add({
         key: currentMonthKey,
@@ -86,17 +89,19 @@ export default function App() {
 
       toast.success('تم بدأ شهر جديد');
       postHog?.capture('month started');
-    } catch (error) {
+    } catch (error: any) {
       toast.error('حدث خطأ غير متوقع!!');
       console.error(error);
 
-      postHog?.captureException(error, {
+      postHog?.capture('$exception', {
         desctiption: 'Error creating new month',
         location: location.pathname,
+        name: error.name,
+        message: error.message || String(error),
       })
 
     } finally {
-      postHog?.stopSessionRecording();
+      setTimeout(() => postHog?.stopSessionRecording(), 30000);
     }
   };
 

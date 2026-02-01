@@ -27,6 +27,7 @@ export function useSystemStatus() {
     isError,
     errorMessage,
     user,
-    phase: syncState?.phase || 'idle'
+    phase: syncState?.phase || 'idle',
+    progress: syncState?.progress
   };
 }

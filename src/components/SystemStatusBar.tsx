@@ -1,8 +1,28 @@
 import { Wifi, WifiOff, RefreshCw, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useSystemStatus } from '../utils/useSystemStatus';
+import { usePostHog } from '@posthog/react';
 
 export default function SystemStatusBar() {
     const { isOnline, isSyncing, isError, errorMessage, phase, user } = useSystemStatus();
+
+    const postHog = usePostHog();
+
+    if(isError) {
+        postHog?.capture('$exception', {
+            name: 'error in system bar',
+            message: errorMessage,
+            phase,
+            user: user?.userId,
+            userData: user?.data
+        })
+        console.log({
+            name: 'error in system bar',
+            message: errorMessage,
+            phase,
+            user: user?.userId,
+            userData: user?.data
+        })
+    }
 
     // If user is not logged in, we only show basic online/offline status
     if (!user?.userId) return null;
@@ -50,7 +70,7 @@ export default function SystemStatusBar() {
 
             {/* RIGHT: Error Messages */}
             {isError && (
-                <div className="flex items-center gap-2 text-error font-bold bg-error/10 px-2 py-0.5 rounded">
+                <div onClick={() => console.error(errorMessage, phase, user, isSyncing)} className="flex items-center gap-2 text-error font-bold bg-error/10 px-2 py-0.5 rounded">
                     <AlertTriangle size={14} />
                     <span>{errorMessage}</span>
                 </div>

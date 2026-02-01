@@ -15,8 +15,7 @@ window.onunhandledrejection = rejection => {
     describtion: 'Error in application window',
     location: 'main.tsx' ,
     type: rejection.type,
-    message: rejection.reason,
-    rejection
+    message: rejection.reason || String(rejection),
   });
 }
 
